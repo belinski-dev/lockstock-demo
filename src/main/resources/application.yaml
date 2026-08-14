@@ -1,3 +1,15 @@
 spring:
   application:
     name: lockstock
+  mongodb:
+    uri: mongodb://localhost:27017/lockstock
+
+logging:
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){faint} %msg%n"
+
+app:
+  instance-id: ${INSTANCE_ID:${random.uuid}}
+  seed-on-startup: true
+  notifications:
+    cron: "*/2 * * * * *"
