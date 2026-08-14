@@ -1,0 +1,59 @@
+x-app: &app
+  image: lockstock-app
+  pull_policy: never
+  restart: unless-stopped
+  depends_on:
+    mongodb:
+      condition: service_healthy
+
+x-app-env: &app-env
+  SPRING_MONGODB_URI: mongodb://mongodb:27017/lockstock
+  APP_SEED_ON_STARTUP: "true"
+
+services:
+  app-a:
+    build: .
+    <<: *app
+    container_name: lockstock-app-a
+    environment:
+      <<: *app-env
+      APP_INSTANCE_ID: "instance-A"
+
+  app-b:
+    <<: *app
+    container_name: lockstock-app-b
+    depends_on:
+      app-a:
+        condition: service_started
+    environment:
+      <<: *app-env
+      APP_INSTANCE_ID: "instance-B"
+
+  app-c:
+    <<: *app
+    container_name: lockstock-app-c
+    depends_on:
+      app-a:
+        condition: service_started
+    environment:
+      <<: *app-env
+      APP_INSTANCE_ID: "instance-C"
+
+  mongodb:
+    image: mongo:8
+    container_name: lockstock-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: lockstock
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')" ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mongodb-data:

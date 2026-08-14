@@ -1,20 +1,28 @@
 package dev.belinski.lockstock.scheduling;
 
+import dev.belinski.lockstock.notification.NotificationService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.util.logging.Logger;
 
 @Component
 public class JobScheduler {
 
-    Logger logger = Logger.getLogger(getClass().getName());
+    private static final Logger log = LogManager.getLogger();
 
-    @Scheduled(fixedRate = 1000)
-    public void notificationsScheduler() {
+    private final NotificationService notificationService;
 
-        logger.info("Scheduler triggered");
+    private final String instanceId;
 
+    public JobScheduler(NotificationService notificationService, @Value("${app.instance-id}") String instanceId) {
+        this.notificationService = notificationService;
+        this.instanceId = instanceId;
     }
 
+    @Scheduled(cron = "*/2 * * * * *")
+    public void notificationsScheduler() {
+        notificationService.sendAndUpdateNotification(instanceId);
+    }
 }
