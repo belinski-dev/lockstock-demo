@@ -56,12 +56,30 @@ class NotificationLockTest {
 
         clearInvocations(repository); // forget the save() calls made while seeding
 
-        // send them all!
-        jobScheduler.notificationsScheduler();
+        int threads = ids.size();
+        var barrier = new CyclicBarrier(threads);
+        var pool = Executors.newFixedThreadPool(threads);
+
+        ids.forEach(_ -> pool.submit(() -> {
+            barrier.await(); //synchronization
+            // send them all!
+            jobScheduler.notificationsScheduler();
+            return null;
+        }));
+
+        pool.shutdown();
+        assertTrue(pool.awaitTermination(10, SECONDS));
 
         assertThat(repository.findAll()).allSatisfy(notification -> {
             assertThat(notification.getStatus()).isEqualTo(NotificationStatus.SENT);
         });
+
+        var sent = ArgumentCaptor.forClass(Notification.class);
+        verify(repository, times(ids.size())).save(sent.capture());
+
+        assertThat(sent.getAllValues())
+                .extracting(Notification::getId)
+                .containsExactlyInAnyOrderElementsOf(ids);
     }
 
     private @NonNull List<String> fillDbWithNotifications() {
@@ -71,6 +89,7 @@ class NotificationLockTest {
         for (int i = 0; i < ids.size(); i++) {
             repository.save(new Notification(
                     ids.get(i),
+                    "user-%d@example.com".formatted(i),
                     "message %d".formatted(i),
                     NotificationStatus.PENDING,
                     createdAt.plusMillis(i)
