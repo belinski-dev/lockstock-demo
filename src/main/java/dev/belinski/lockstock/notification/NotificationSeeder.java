@@ -29,9 +29,9 @@ public class NotificationSeeder implements ApplicationRunner {
         Instant createdAt = Instant.now();
 
         for (int i = 1; i <= COUNT; i++) {
-            String id = RandomStringUtils.insecure().nextAlphanumeric(5);
+            Long id = Long.valueOf(RandomStringUtils.insecure().nextNumeric(5));
             Notification notification = new Notification(
-                    "notif-"+id,
+                    "user-%s@example.com".formatted(id),
                     "Your order #%s is ready".formatted(id),
                     NotificationStatus.PENDING,
                     createdAt.plusMillis(i)

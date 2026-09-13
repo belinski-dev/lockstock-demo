@@ -3,11 +3,13 @@ x-app: &app
   pull_policy: never
   restart: unless-stopped
   depends_on:
-    mongodb:
+    postgres:
       condition: service_healthy
 
 x-app-env: &app-env
-  SPRING_MONGODB_URI: mongodb://mongodb:27017/lockstock
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lockstock
+  SPRING_DATASOURCE_USERNAME: demo
+  SPRING_DATASOURCE_PASSWORD: demo
   APP_SEED_ON_STARTUP: "true"
 
 services:
@@ -39,21 +41,40 @@ services:
       <<: *app-env
       APP_INSTANCE_ID: "instance-C"
 
-  mongodb:
-    image: mongo:8
-    container_name: lockstock-mongodb
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
+  postgres:
+    image: postgres:16-alpine
+    container_name: lockstock-postgres
     environment:
-      MONGO_INITDB_DATABASE: lockstock
-    volumes:
-      - mongodb-data:/data/db
+      POSTGRES_DB: lockstock
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "5432:5432"
+    command:
+      - postgres
+      - -c
+      - log_lock_waits=on
+      - -c
+      - deadlock_timeout=200ms
+      - -c
+      - lock_timeout=5s
+      - -c
+      - statement_timeout=10s
+      # Show every statement (for FOR UPDATE / SKIP LOCKED) in the DB log
+      - -c
+      - log_statement=all
+      - -c
+      - log_line_prefix=%m [%p] %q%u@%d
+      - -c
+      - log_min_duration_statement=0
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - track_activity_query_size=2048
     healthcheck:
-      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')" ]
-      interval: 3s
+      test: [ "CMD-SHELL", "pg_isready -U demo -d lockstock" ]
+      interval: 2s
       timeout: 3s
-      retries: 10
-
-volumes:
-  mongodb-data:
+      retries: 15

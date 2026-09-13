@@ -8,12 +8,14 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.mongodb.MongoDBContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
@@ -21,7 +23,6 @@ import java.util.concurrent.Executors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
@@ -37,7 +38,7 @@ class NotificationLockTest {
 
     @Container
     @ServiceConnection
-    static MongoDBContainer mongodb = new MongoDBContainer("mongo:8");
+    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16-alpine").waitingFor(Wait.forListeningPort());
 
     @MockitoSpyBean
     NotificationRepository repository;
@@ -52,7 +53,7 @@ class NotificationLockTest {
 
     @Test
     void schedulerSendsPendingNotifications() throws InterruptedException {
-        List<String> ids = fillDbWithNotifications();
+        List<Long> ids = fillDbWithNotifications();
 
         clearInvocations(repository); // forget the save() calls made while seeding
 
@@ -82,13 +83,12 @@ class NotificationLockTest {
                 .containsExactlyInAnyOrderElementsOf(ids);
     }
 
-    private @NonNull List<String> fillDbWithNotifications() {
+    private @NonNull List<Long> fillDbWithNotifications() {
         Instant createdAt = Instant.now();
-        List<String> ids = List.of("test-00", "test-01", "test-02", "test-03", "test-04");
+        List<Long> ids = List.of(1L, 2L, 3L, 4L, 5L);
 
         for (int i = 0; i < ids.size(); i++) {
             repository.save(new Notification(
-                    ids.get(i),
                     "user-%d@example.com".formatted(i),
                     "message %d".formatted(i),
                     NotificationStatus.PENDING,
@@ -97,5 +97,4 @@ class NotificationLockTest {
         }
         return ids;
     }
-
 }

@@ -1,31 +1,38 @@
 package dev.belinski.lockstock.notification;
 
+import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
-@Document("notifications")
+@Entity
+@Table(name = "notifications")
 @Data
 public class Notification {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String recipient;
 
     private String message;
 
+    @Enumerated(EnumType.STRING)
     private NotificationStatus status;
 
     private Instant createdAt;
 
     private Instant sentAt;
 
-    public Notification(String id, String message, NotificationStatus status, Instant createdAt) {
-        this.id = id;
+    public Notification(String recipient, String message, NotificationStatus status, Instant createdAt) {
+        this.recipient = recipient;
         this.message = message;
         this.status = status;
         this.createdAt = createdAt;
     }
 
+    public Notification() {
+
+    }
 }
