@@ -3,7 +3,6 @@ package dev.belinski.lockstock.notification;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -31,8 +30,6 @@ public class NotificationService {
                 sendNotification(notification);
             } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
-            } catch (OptimisticLockingFailureException _) {
-                log.info("Optimistic locking failure, skip execution");
             }
 
             log.info("Notification {} sent by INSTANCE {}", notification.getId(), instanceId);

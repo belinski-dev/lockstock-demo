@@ -8,6 +8,5 @@ CREATE TABLE IF NOT EXISTS notifications
     status          VARCHAR(16)  NOT NULL,
     created_at      TIMESTAMPTZ  NOT NULL,
     sent_at         TIMESTAMPTZ,
-    send_count      INT          NOT NULL DEFAULT 0,
-    version         BIGINT       DEFAULT 0
+    send_count      INT          NOT NULL DEFAULT 0
 );
