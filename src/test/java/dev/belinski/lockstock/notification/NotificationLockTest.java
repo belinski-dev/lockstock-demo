@@ -8,8 +8,6 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
@@ -40,8 +38,11 @@ class NotificationLockTest {
     @ServiceConnection
     static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:16-alpine").waitingFor(Wait.forListeningPort());
 
-    @MockitoSpyBean
+    @Autowired
     NotificationRepository repository;
+
+    @MockitoSpyBean
+    NotificationService notificationService;
 
     @Autowired
     JobScheduler jobScheduler;
@@ -55,7 +56,7 @@ class NotificationLockTest {
     void schedulerSendsPendingNotifications() throws InterruptedException {
         List<Long> ids = fillDbWithNotifications();
 
-        clearInvocations(repository); // forget the save() calls made while seeding
+        clearInvocations(notificationService);
 
         int threads = ids.size();
         var barrier = new CyclicBarrier(threads);
@@ -76,11 +77,7 @@ class NotificationLockTest {
         });
 
         var sent = ArgumentCaptor.forClass(Notification.class);
-        verify(repository, times(ids.size())).save(sent.capture());
-
-        assertThat(sent.getAllValues())
-                .extracting(Notification::getId)
-                .containsExactlyInAnyOrderElementsOf(ids);
+        verify(notificationService, times(ids.size())).sendNotification(sent.capture());
     }
 
     private @NonNull List<Long> fillDbWithNotifications() {

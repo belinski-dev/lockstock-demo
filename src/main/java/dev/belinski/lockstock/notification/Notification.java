@@ -25,6 +25,9 @@ public class Notification {
 
     private Instant sentAt;
 
+//    @Version
+    private Long version;
+
     public Notification(String recipient, String message, NotificationStatus status, Instant createdAt) {
         this.recipient = recipient;
         this.message = message;
