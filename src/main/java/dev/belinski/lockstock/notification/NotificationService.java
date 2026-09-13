@@ -1,5 +1,6 @@
 package dev.belinski.lockstock.notification;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +16,7 @@ public class NotificationService {
     private final NotificationRepository repository;
     private static final Logger log = LogManager.getLogger();
 
+    @Transactional // lock must be inside the transaction
     public void sendAndUpdateNotification(String instanceId) {
         List<Notification> pending = repository.findTop5ByStatusOrderByCreatedAtAsc(NotificationStatus.PENDING);
 
