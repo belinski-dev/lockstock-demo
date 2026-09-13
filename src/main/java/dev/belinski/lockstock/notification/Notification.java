@@ -25,7 +25,7 @@ public class Notification {
 
     private Instant sentAt;
 
-//    @Version
+    @Version
     private Long version;
 
     public Notification(String recipient, String message, NotificationStatus status, Instant createdAt) {
