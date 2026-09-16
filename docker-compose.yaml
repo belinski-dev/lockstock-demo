@@ -59,9 +59,9 @@ services:
       - -c
       - deadlock_timeout=200ms
       - -c
-      - lock_timeout=5s
+      - lock_timeout=100ms
       - -c
-      - statement_timeout=10s
+      - statement_timeout=60s
       # Show every statement (for FOR UPDATE / SKIP LOCKED) in the DB log
       - -c
       - log_statement=all

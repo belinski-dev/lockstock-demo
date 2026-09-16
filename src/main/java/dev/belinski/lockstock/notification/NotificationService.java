@@ -18,7 +18,11 @@ public class NotificationService {
 
     @Transactional // lock must be inside the transaction
     public void sendAndUpdateNotification(String instanceId) {
+        long t0 = System.currentTimeMillis();
+        log.info("{} acquiring lock...", instanceId);
         List<Notification> pending = repository.findTop5ByStatusOrderByCreatedAtAsc(NotificationStatus.PENDING);
+        log.info("{} lock acquired after {}ms, {} rows",
+                instanceId, System.currentTimeMillis() - t0, pending.size());
 
         if (pending.isEmpty()) { log.info("No pending notifications found"); }
 

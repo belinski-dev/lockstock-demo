@@ -4,6 +4,7 @@ import dev.belinski.lockstock.notification.NotificationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,11 @@ public class JobScheduler {
 
     @Scheduled(cron = "*/2 * * * * *")
     public void notificationsScheduler() {
-        notificationService.sendAndUpdateNotification(instanceId);
+        try {
+            notificationService.sendAndUpdateNotification(instanceId);
+        } catch (
+                CannotAcquireLockException e) {
+            log.info("{} could not acquire lock — skipping", instanceId);
+        }
     }
 }
